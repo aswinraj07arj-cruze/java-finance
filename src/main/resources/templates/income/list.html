@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header('Income Management')}"></head>
+<body>
+<div class="app-container">
+    <aside th:replace="~{layout/main :: sidebar}"></aside>
+    <div class="main-wrapper">
+        <header th:replace="~{layout/main :: topbar('Income Tracking')}"></header>
+        <main class="content-body">
+            <div th:replace="~{layout/main :: alerts}"></div>
+
+            <!-- Add Income Card Form -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Record New Income</div>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/income}" th:object="${incomeForm}" method="post">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="amount">Amount ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="amount" th:field="*{amount}" placeholder="e.g. 2500.00" required>
+                                <div class="form-error" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="source">Source</label>
+                                <select class="form-control" id="source" th:field="*{source}" required>
+                                    <option value="">-- Select Source --</option>
+                                    <option th:each="src : ${sources}" th:value="${src}" th:text="${src.displayName}">Salary</option>
+                                </select>
+                                <div class="form-error" th:if="${#fields.hasErrors('source')}" th:errors="*{source}"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="date">Date</label>
+                                <input type="date" class="form-control" id="date" th:field="*{date}" required>
+                                <div class="form-error" th:if="${#fields.hasErrors('date')}" th:errors="*{date}"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="note">Note / Payer</label>
+                                <input type="text" class="form-control" id="note" th:field="*{note}" placeholder="e.g. Monthly salary, consulting">
+                                <div class="form-error" th:if="${#fields.hasErrors('note')}" th:errors="*{note}"></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                            <button type="submit" class="btn btn-success">+ Add Income</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <form th:action="@{/income}" method="get" class="filter-bar">
+                <div style="flex: 1; min-width: 150px;">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" name="startDate" th:value="${startDate}" class="form-control">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label class="form-label">End Date</label>
+                    <input type="date" name="endDate" th:value="${endDate}" class="form-control">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label class="form-label">Source</label>
+                    <select name="source" class="form-control">
+                        <option value="">All Sources</option>
+                        <option th:each="s : ${sources}" th:value="${s}" th:text="${s.displayName}" th:selected="${selectedSource == s}">Source</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a th:href="@{/income}" class="btn btn-secondary" style="margin-left: 0.5rem;">Reset</a>
+                </div>
+            </form>
+
+            <!-- Incomes List Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Income History</div>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);" th:text="${incomes.size()} + ' records found'">0 records</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Source</th>
+                            <th>Note</th>
+                            <th style="text-align: right;">Amount</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${incomes.isEmpty()}">
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No income records found matching the filter criteria.</td>
+                        </tr>
+                        <tr th:each="inc : ${incomes}">
+                            <td th:text="${inc.date}">2026-09-01</td>
+                            <td>
+                                <span class="badge" th:classappend="${inc.source.badgeClass}" th:text="${inc.source.displayName}">Salary</span>
+                            </td>
+                            <td th:text="${inc.note ?: '-'}">Salary payment</td>
+                            <td style="text-align: right; font-weight: 700; color: #059669;">
+                                +&#8377;<span th:text="${#numbers.formatDecimal(inc.amount, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                            </td>
+                            <td style="text-align: right;">
+                                <a th:href="@{'/income/edit/' + ${inc.id}}" class="btn btn-sm btn-secondary">Edit</a>
+                                <form th:action="@{'/income/delete/' + ${inc.id}}" method="post" style="display:inline; margin-left: 0.25rem;" onsubmit="return confirm('Are you sure you want to delete this income record?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{layout/main :: scripts}"></div>
+</body>
+</html>

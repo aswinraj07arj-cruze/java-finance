@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header('Resource Not Found')}"></head>
+<body>
+<div class="app-container">
+    <aside th:replace="~{layout/main :: sidebar}"></aside>
+    <div class="main-wrapper">
+        <header th:replace="~{layout/main :: topbar('404 Not Found')}"></header>
+        <main class="content-body">
+            <div class="card" style="max-width: 550px; margin: 3rem auto; text-align: center; padding: 2rem;">
+                <div style="font-size: 3.5rem; font-weight: 800; color: var(--primary); margin-bottom: 1rem;">404</div>
+                <h2 style="margin-bottom: 0.5rem;">Resource Not Found</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;" th:text="${errorMessage ?: 'The transaction, budget, or page you requested could not be located.'}">The requested item was not found.</p>
+                <a th:href="@{/dashboard}" class="btn btn-primary">Return to Dashboard</a>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{layout/main :: scripts}"></div>
+</body>
+</html>

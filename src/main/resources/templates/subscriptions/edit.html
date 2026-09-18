@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header('Edit Subscription')}"></head>
+<body>
+<div class="app-container">
+    <aside th:replace="~{layout/main :: sidebar}"></aside>
+    <div class="main-wrapper">
+        <header th:replace="~{layout/main :: topbar('Edit Subscription')}"></header>
+        <main class="content-body">
+            <div th:replace="~{layout/main :: alerts}"></div>
+
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <div class="card-header">
+                    <div class="card-title">Edit Subscription</div>
+                    <a th:href="@{/subscriptions}" class="btn btn-sm btn-secondary">Back to List</a>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{'/subscriptions/edit/' + ${subscriptionForm.id}}" th:object="${subscriptionForm}" method="post">
+                        <div class="form-group">
+                            <label class="form-label" for="name">Subscription Name</label>
+                            <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                            <div class="form-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="amount">Recurring Amount ($)</label>
+                            <input type="number" step="0.01" class="form-control" id="amount" th:field="*{amount}" required>
+                            <div class="form-error" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="billingCycle">Billing Cycle</label>
+                            <select class="form-control" id="billingCycle" th:field="*{billingCycle}" required>
+                                <option th:each="cycle : ${billingCycles}" th:value="${cycle}" th:text="${cycle.displayName}">Monthly</option>
+                            </select>
+                            <div class="form-error" th:if="${#fields.hasErrors('billingCycle')}" th:errors="*{billingCycle}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="nextDueDate">Next Due Date</label>
+                            <input type="date" class="form-control" id="nextDueDate" th:field="*{nextDueDate}" required>
+                            <div class="form-error" th:if="${#fields.hasErrors('nextDueDate')}" th:errors="*{nextDueDate}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="category">Category</label>
+                            <select class="form-control" id="category" th:field="*{category}" required>
+                                <option th:each="c : ${categories}" th:value="${c}" th:text="${c.displayName}">Bills</option>
+                            </select>
+                            <div class="form-error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+                        </div>
+
+                        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+                            <input type="checkbox" id="active" th:field="*{active}">
+                            <label for="active" style="font-size: 0.9rem; font-weight: 600; cursor: pointer;">Active Subscription</label>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                            <a th:href="@{/subscriptions}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{layout/main :: scripts}"></div>
+</body>
+</html>

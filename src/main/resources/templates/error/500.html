@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header('Server Error')}"></head>
+<body>
+<div class="app-container">
+    <aside th:replace="~{layout/main :: sidebar}"></aside>
+    <div class="main-wrapper">
+        <header th:replace="~{layout/main :: topbar('500 Server Error')}"></header>
+        <main class="content-body">
+            <div class="card" style="max-width: 550px; margin: 3rem auto; text-align: center; padding: 2rem;">
+                <div style="font-size: 3.5rem; font-weight: 800; color: var(--danger); margin-bottom: 1rem;">500</div>
+                <h2 style="margin-bottom: 0.5rem;">Something Went Wrong</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;" th:text="${errorMessage ?: 'An unexpected error occurred while processing your financial request.'}">Server error occurred.</p>
+                <div th:if="${errorDetails}" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; font-size: 0.8rem; color: #64748b; margin-bottom: 1.5rem;" th:text="${errorDetails}"></div>
+                <a th:href="@{/dashboard}" class="btn btn-primary">Return to Dashboard</a>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{layout/main :: scripts}"></div>
+</body>
+</html>

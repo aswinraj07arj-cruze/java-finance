@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header('Budget Management')}"></head>
+<body>
+<div class="app-container">
+    <aside th:replace="~{layout/main :: sidebar}"></aside>
+    <div class="main-wrapper">
+        <header th:replace="~{layout/main :: topbar('Budget Management')}"></header>
+        <main class="content-body">
+            <div th:replace="~{layout/main :: alerts}"></div>
+
+            <!-- Set / Update Monthly Budget Card Form -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Set Monthly Category Budget</div>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/budgets}" th:object="${budgetForm}" method="post">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="category">Expense Category</label>
+                                <select class="form-control" id="category" th:field="*{category}" required>
+                                    <option value="">-- Choose Category --</option>
+                                    <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat.displayName}">Food</option>
+                                </select>
+                                <div class="form-error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="monthlyLimit">Monthly Spending Limit ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="monthlyLimit" th:field="*{monthlyLimit}" placeholder="e.g. 500.00" required>
+                                <div class="form-error" th:if="${#fields.hasErrors('monthlyLimit')}" th:errors="*{monthlyLimit}"></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                            <button type="submit" class="btn btn-primary">Save Category Budget</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Budgets Status Cards and Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Current Month Budget Performance</div>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Real-time actual spend vs monthly limit</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Monthly Limit</th>
+                            <th>Actual Spent</th>
+                            <th>Remaining</th>
+                            <th>Budget Progress</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${budgets.isEmpty()}">
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No monthly category budgets configured yet.</td>
+                        </tr>
+                        <tr th:each="b : ${budgets}">
+                            <td>
+                                <span class="badge" th:classappend="${b.category.badgeClass}" th:text="${b.category.displayName}">Category</span>
+                            </td>
+                            <td style="font-weight: 600;">
+                                &#8377;<span th:text="${#numbers.formatDecimal(b.monthlyLimit, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                            </td>
+                            <td style="font-weight: 600;">
+                                &#8377;<span th:text="${#numbers.formatDecimal(b.actualSpent, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                            </td>
+                            <td style="font-weight: 700;" th:styleappend="${b.overBudget ? 'color: #dc2626;' : 'color: #059669;'}">
+                                &#8377;<span th:text="${#numbers.formatDecimal(b.remainingAmount, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                            </td>
+                            <td style="min-width: 180px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 2px;">
+                                    <span>Progress</span>
+                                    <span style="font-weight: 700;"><span th:text="${#numbers.formatDecimal(b.percentUsed, 1, 1)}">0</span>%</span>
+                                </div>
+                                <div class="progress-container" style="margin: 0;">
+                                    <div class="progress-bar" th:classappend="${b.progressBarClass}" th:style="'width: ' + ${b.percentUsed > 100 ? 100 : b.percentUsed} + '%;'"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span th:if="${b.overBudget}" class="badge badge-danger">
+                                    Over by &#8377;<span th:text="${#numbers.formatDecimal(b.actualSpent.subtract(b.monthlyLimit), 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                </span>
+                                <span th:unless="${b.overBudget}" class="badge" th:classappend="${b.statusBadgeClass}">
+                                    Under by &#8377;<span th:text="${#numbers.formatDecimal(b.remainingAmount, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <form th:action="@{'/budgets/delete/' + ${b.id}}" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to remove this budget limit?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{layout/main :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header('Dashboard')}"></head>
+<body>
+<div class="app-container">
+    <aside th:replace="~{layout/main :: sidebar}"></aside>
+    <div class="main-wrapper">
+        <header th:replace="~{layout/main :: topbar('Financial Dashboard')}"></header>
+        <main class="content-body">
+            <div th:replace="~{layout/main :: alerts}"></div>
+
+            <!-- Subscriptions Due Alert (Due within 3 days) -->
+            <div th:if="${dueSubscriptions != null && !dueSubscriptions.isEmpty()}" class="due-banner">
+                <div class="due-banner-header">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <span>Upcoming Subscriptions (Due within 3 days)</span>
+                </div>
+                <div class="due-items-list">
+                    <div th:each="sub : ${dueSubscriptions}" class="due-item-pill">
+                        <strong><span th:text="${sub.name}">Netflix</span></strong>
+                        <span style="color: #ef4444; font-weight: 700;">&#8377;<span th:text="${sub.amount}">15.99</span></span>
+                        <span style="color: #64748b; font-size: 0.8rem;">Due: <span th:text="${sub.nextDueDate}">2026-09-12</span></span>
+                        <form th:action="@{'/subscriptions/pay/' + ${sub.id}}" method="post" style="display:inline; margin-left: 0.5rem;" onsubmit="this.querySelector('button').disabled = true;">
+                            <button type="submit" class="btn btn-sm btn-success" title="Mark cycle paid and advance due date">Mark Paid</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Key Metrics Cards -->
+            <div class="metrics-grid">
+                <!-- Balance -->
+                <div class="metric-card card-balance">
+                    <div class="metric-label">Available Balance</div>
+                    <div class="metric-value">&#8377;<span th:text="${#numbers.formatDecimal(summary.availableBalance, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+                    <div class="metric-meta">
+                        <span>Net liquidity across all accounts</span>
+                    </div>
+                </div>
+
+                <!-- Income -->
+                <div class="metric-card card-income">
+                    <div class="metric-label">This Month Income</div>
+                    <div class="metric-value" style="color: #059669;">+&#8377;<span th:text="${#numbers.formatDecimal(summary.thisMonthIncome, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+                    <div class="metric-meta">
+                        <span th:class="${summary.incomeMoMChangePercent >= 0 ? 'trend-up' : 'trend-down'}">
+                            <span th:text="${summary.incomeMoMChangePercent >= 0 ? '↑ +' : '↓ '}"></span><span th:text="${summary.incomeMoMChangePercent}">0.00</span>%
+                        </span>
+                        <span>vs last month</span>
+                    </div>
+                </div>
+
+                <!-- Expense -->
+                <div class="metric-card card-expense">
+                    <div class="metric-label">This Month Expense</div>
+                    <div class="metric-value" style="color: #dc2626;">-&#8377;<span th:text="${#numbers.formatDecimal(summary.thisMonthExpense, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+                    <div class="metric-meta">
+                        <span th:class="${summary.expenseMoMChangePercent <= 0 ? 'trend-up' : 'trend-down'}">
+                            <span th:text="${summary.expenseMoMChangePercent >= 0 ? '↑ +' : '↓ '}"></span><span th:text="${summary.expenseMoMChangePercent}">0.00</span>%
+                        </span>
+                        <span>vs last month</span>
+                    </div>
+                </div>
+
+                <!-- Monthly Savings -->
+                <div class="metric-card card-savings">
+                    <div class="metric-label">Monthly Net Savings</div>
+                    <div class="metric-value" style="color: #6366f1;">&#8377;<span th:text="${#numbers.formatDecimal(summary.thisMonthSavings, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+                    <div class="metric-meta">
+                        <span th:class="${summary.savingsMoMChangePercent >= 0 ? 'trend-up' : 'trend-down'}">
+                            <span th:text="${summary.savingsMoMChangePercent >= 0 ? '↑ +' : '↓ '}"></span><span th:text="${summary.savingsMoMChangePercent}">0.00</span>%
+                        </span>
+                        <span>vs last month</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-grid">
+                <!-- Income vs Expense Monthly Bar Chart -->
+                <div class="card" style="margin-bottom: 0;">
+                    <div class="card-header">
+                        <div class="card-title">Income vs Expense (Past 12 Months)</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrapper">
+                            <canvas id="incomeVsExpenseChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expense by Category Doughnut Chart -->
+                <div class="card" style="margin-bottom: 0;">
+                    <div class="card-header">
+                        <div class="card-title">Current Month Expenses by Category</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrapper">
+                            <canvas id="expenseCategoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Savings Trend Line Chart -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">
+                    <div class="card-title">Savings Growth Trend (Past 12 Months)</div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-wrapper">
+                        <canvas id="savingsTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Budgets Quick Glance -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Monthly Category Budgets Status</div>
+                    <a th:href="@{/budgets}" class="btn btn-sm btn-secondary">Manage Budgets</a>
+                </div>
+                <div class="card-body">
+                    <div th:if="${budgets == null || budgets.isEmpty()}" style="color: var(--text-muted); font-size: 0.9rem;">
+                        No monthly budgets defined yet. <a th:href="@{/budgets}" style="color: var(--primary); font-weight: 600;">Set your first budget</a>.
+                    </div>
+                    <div th:unless="${budgets == null || budgets.isEmpty()}" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div th:each="b : ${budgets}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                                <div>
+                                    <span class="badge" th:classappend="${b.category.badgeClass}" th:text="${b.category.displayName}">Category</span>
+                                    <span th:if="${b.overBudget}" class="badge badge-danger" style="margin-left: 0.5rem;">Over Budget!</span>
+                                </div>
+                                <div style="font-size: 0.85rem; font-weight: 600;">
+                                    &#8377;<span th:text="${#numbers.formatDecimal(b.actualSpent, 1, 'COMMA', 2, 'POINT')}">0.00</span> /
+                                    &#8377;<span th:text="${#numbers.formatDecimal(b.monthlyLimit, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                    (<span th:text="${#numbers.formatDecimal(b.percentUsed, 1, 1)}">0.0</span>%)
+                                </div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar" th:classappend="${b.progressBarClass}" th:style="'width: ' + ${b.percentUsed > 100 ? 100 : b.percentUsed} + '%;'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{layout/main :: scripts}"></div>
+</body>
+</html>

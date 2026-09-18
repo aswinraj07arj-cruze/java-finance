@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header('Subscription Management')}"></head>
+<body>
+<div class="app-container">
+    <aside th:replace="~{layout/main :: sidebar}"></aside>
+    <div class="main-wrapper">
+        <header th:replace="~{layout/main :: topbar('Subscription Management')}"></header>
+        <main class="content-body">
+            <div th:replace="~{layout/main :: alerts}"></div>
+
+            <!-- Subscriptions Due Soon Banner -->
+            <div th:if="${dueWithin3Days != null && !dueWithin3Days.isEmpty()}" class="due-banner">
+                <div class="due-banner-header">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <span>Subscriptions Due Soon (Next 3 Days)</span>
+                </div>
+                <div class="due-items-list">
+                    <div th:each="sub : ${dueWithin3Days}" class="due-item-pill">
+                        <strong><span th:text="${sub.name}">Subscription</span></strong>
+                        <span style="color: #ef4444; font-weight: 700;">&#8377;<span th:text="${sub.amount}">0.00</span></span>
+                        <span style="color: #64748b; font-size: 0.8rem;">Due: <span th:text="${sub.nextDueDate}">2026-09-12</span></span>
+                        <form th:action="@{'/subscriptions/renew/' + ${sub.id}}" method="post" style="display:inline; margin-left: 0.5rem;">
+                            <button type="submit" class="btn btn-sm btn-success">Mark Paid</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Subscription Form Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Add New Subscription</div>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/subscriptions}" th:object="${subscriptionForm}" method="post">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="name">Subscription Name</label>
+                                <input type="text" class="form-control" id="name" th:field="*{name}" placeholder="e.g. Netflix, Spotify, AWS" required>
+                                <div class="form-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="amount">Recurring Amount ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="amount" th:field="*{amount}" placeholder="e.g. 14.99" required>
+                                <div class="form-error" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="billingCycle">Billing Cycle</label>
+                                <select class="form-control" id="billingCycle" th:field="*{billingCycle}" required>
+                                    <option th:each="cycle : ${billingCycles}" th:value="${cycle}" th:text="${cycle.displayName}">Monthly</option>
+                                </select>
+                                <div class="form-error" th:if="${#fields.hasErrors('billingCycle')}" th:errors="*{billingCycle}"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="nextDueDate">Next Due Date</label>
+                                <input type="date" class="form-control" id="nextDueDate" th:field="*{nextDueDate}" required>
+                                <div class="form-error" th:if="${#fields.hasErrors('nextDueDate')}" th:errors="*{nextDueDate}"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="category">Category</label>
+                                <select class="form-control" id="category" th:field="*{category}" required>
+                                    <option th:each="c : ${categories}" th:value="${c}" th:text="${c.displayName}">Bills</option>
+                                </select>
+                                <div class="form-error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                            <button type="submit" class="btn btn-primary">+ Add Subscription</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Subscriptions List Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">All Subscriptions</div>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);" th:text="${subscriptions.size()} + ' active / total'">0 total</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Billing Cycle</th>
+                            <th>Next Due Date</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Amount</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${subscriptions.isEmpty()}">
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No active or tracked subscriptions.</td>
+                        </tr>
+                        <tr th:each="s : ${subscriptions}">
+                            <td style="font-weight: 600;" th:text="${s.name}">Netflix</td>
+                            <td>
+                                <span class="badge" th:classappend="${s.category.badgeClass}" th:text="${s.category.displayName}">Entertainment</span>
+                            </td>
+                            <td th:text="${s.billingCycle.displayName}">Monthly</td>
+                            <td>
+                                <span th:text="${s.nextDueDate}">2026-09-12</span>
+                                <span th:if="${s.active and (s.nextDueDate != null and !s.nextDueDate.isAfter(T(java.time.LocalDate).now().plusDays(3)))}" class="badge badge-danger" style="margin-left: 0.25rem;">Due Soon!</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${s.active ? 'badge-success' : 'badge-others'}" th:text="${s.active ? 'Active' : 'Paused'}">Active</span>
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: #dc2626;">
+                                &#8377;<span th:text="${#numbers.formatDecimal(s.amount, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                            </td>
+                            <td style="text-align: right;">
+                                <form th:action="@{'/subscriptions/pay/' + ${s.id}}" method="post" style="display:inline;" onsubmit="this.querySelector('button').disabled = true;" title="Mark Paid & Advance Date">
+                                    <button type="submit" class="btn btn-sm btn-success">Mark Paid</button>
+                                </form>
+                                <form th:action="@{'/subscriptions/toggle/' + ${s.id}}" method="post" style="display:inline; margin-left: 0.25rem;">
+                                    <button type="submit" class="btn btn-sm btn-secondary" th:text="${s.active ? 'Pause' : 'Resume'}">Pause</button>
+                                </form>
+                                <a th:href="@{'/subscriptions/edit/' + ${s.id}}" class="btn btn-sm btn-secondary" style="margin-left: 0.25rem;">Edit</a>
+                                <form th:action="@{'/subscriptions/delete/' + ${s.id}}" method="post" style="display:inline; margin-left: 0.25rem;" onsubmit="return confirm('Delete this subscription?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{layout/main :: scripts}"></div>
+</body>
+</html>

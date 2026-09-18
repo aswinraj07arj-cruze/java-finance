@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header('Unified Transaction History')}"></head>
+<body>
+<div class="app-container">
+    <aside th:replace="~{layout/main :: sidebar}"></aside>
+    <div class="main-wrapper">
+        <header th:replace="~{layout/main :: topbar('Unified Transaction History')}"></header>
+        <main class="content-body">
+            <div th:replace="~{layout/main :: alerts}"></div>
+
+            <!-- Filter & Search Bar -->
+            <form th:action="@{/transactions}" method="get" class="filter-bar">
+                <!-- Search Keyword -->
+                <div style="flex: 2; min-width: 220px;">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="search" th:value="${filter.search}" placeholder="Search description, notes, category..." class="form-control">
+                </div>
+
+                <!-- Type Filter -->
+                <div style="flex: 1; min-width: 130px;">
+                    <label class="form-label">Type</label>
+                    <select name="type" class="form-control">
+                        <option value="ALL" th:selected="${filter.type == 'ALL' or filter.type == null}">All Types</option>
+                        <option value="INCOME" th:selected="${filter.type == 'INCOME'}">Income Only</option>
+                        <option value="EXPENSE" th:selected="${filter.type == 'EXPENSE'}">Expense Only</option>
+                    </select>
+                </div>
+
+                <!-- Start Date -->
+                <div style="flex: 1; min-width: 140px;">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" name="startDate" th:value="${filter.startDate}" class="form-control">
+                </div>
+
+                <!-- End Date -->
+                <div style="flex: 1; min-width: 140px;">
+                    <label class="form-label">End Date</label>
+                    <input type="date" name="endDate" th:value="${filter.endDate}" class="form-control">
+                </div>
+
+                <!-- Submit & Reset -->
+                <div>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a th:href="@{/transactions}" class="btn btn-secondary" style="margin-left: 0.5rem;">Reset</a>
+                </div>
+            </form>
+
+            <!-- Unified Transactions Table Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Unified Transaction History</div>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);" th:text="${page.totalElements} + ' total transactions'">0 transactions</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Category / Source</th>
+                            <th>Description / Note</th>
+                            <th style="text-align: right;">Amount</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${transactions.isEmpty()}">
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions found matching the filter criteria.</td>
+                        </tr>
+                        <tr th:each="t : ${transactions}">
+                            <td th:text="${t.date}">2026-09-01</td>
+                            <td>
+                                <span class="badge" th:classappend="${t.income ? 'badge-income' : 'badge-expense'}" th:text="${t.type}">INCOME</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${t.badgeClass}" th:text="${t.categoryOrSource}">Salary</span>
+                            </td>
+                            <td th:text="${t.descriptionOrNote}">Primary Paycheck</td>
+                            <td style="text-align: right; font-weight: 700;" th:styleappend="${t.income ? 'color: #059669;' : 'color: #dc2626;'}">
+                                <span th:text="${t.income ? '+' : '-'}"></span>&#8377;<span th:text="${#numbers.formatDecimal(t.amount, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Controls -->
+                <div class="card-body" th:if="${page.totalPages > 1}" style="padding-top: 0;">
+                    <div class="pagination">
+                        <!-- Previous Button -->
+                        <a th:if="${page.hasPrevious()}"
+                           th:href="@{/transactions(page=${page.number - 1}, size=${filter.size}, type=${filter.type}, startDate=${filter.startDate}, endDate=${filter.endDate}, search=${filter.search})}">
+                            &laquo; Previous
+                        </a>
+                        <span th:unless="${page.hasPrevious()}" style="opacity: 0.5; cursor: not-allowed;">&laquo; Previous</span>
+
+                        <!-- Page numbers -->
+                        <span th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}">
+                            <a th:if="${i != page.number}"
+                               th:href="@{/transactions(page=${i}, size=${filter.size}, type=${filter.type}, startDate=${filter.startDate}, endDate=${filter.endDate}, search=${filter.search})}"
+                               th:text="${i + 1}">1</a>
+                            <span th:if="${i == page.number}" class="active" th:text="${i + 1}">1</span>
+                        </span>
+
+                        <!-- Next Button -->
+                        <a th:if="${page.hasNext()}"
+                           th:href="@{/transactions(page=${page.number + 1}, size=${filter.size}, type=${filter.type}, startDate=${filter.startDate}, endDate=${filter.endDate}, search=${filter.search})}">
+                            Next &raquo;
+                        </a>
+                        <span th:unless="${page.hasNext()}" style="opacity: 0.5; cursor: not-allowed;">Next &raquo;</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{layout/main :: scripts}"></div>
+</body>
+</html>

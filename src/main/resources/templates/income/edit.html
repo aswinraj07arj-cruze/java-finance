@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header('Edit Income')}"></head>
+<body>
+<div class="app-container">
+    <aside th:replace="~{layout/main :: sidebar}"></aside>
+    <div class="main-wrapper">
+        <header th:replace="~{layout/main :: topbar('Edit Income')}"></header>
+        <main class="content-body">
+            <div th:replace="~{layout/main :: alerts}"></div>
+
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <div class="card-header">
+                    <div class="card-title">Edit Income Record</div>
+                    <a th:href="@{/income}" class="btn btn-sm btn-secondary">Back to List</a>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{'/income/edit/' + ${incomeForm.id}}" th:object="${incomeForm}" method="post">
+                        <div class="form-group">
+                            <label class="form-label" for="amount">Amount ($)</label>
+                            <input type="number" step="0.01" class="form-control" id="amount" th:field="*{amount}" required>
+                            <div class="form-error" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="source">Source</label>
+                            <select class="form-control" id="source" th:field="*{source}" required>
+                                <option th:each="src : ${sources}" th:value="${src}" th:text="${src.displayName}">Salary</option>
+                            </select>
+                            <div class="form-error" th:if="${#fields.hasErrors('source')}" th:errors="*{source}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="date">Date</label>
+                            <input type="date" class="form-control" id="date" th:field="*{date}" required>
+                            <div class="form-error" th:if="${#fields.hasErrors('date')}" th:errors="*{date}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="note">Note / Payer</label>
+                            <input type="text" class="form-control" id="note" th:field="*{note}">
+                            <div class="form-error" th:if="${#fields.hasErrors('note')}" th:errors="*{note}"></div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                            <a th:href="@{/income}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{layout/main :: scripts}"></div>
+</body>
+</html>
