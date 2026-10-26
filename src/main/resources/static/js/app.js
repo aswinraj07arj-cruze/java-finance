@@ -130,6 +130,17 @@
             if (method === 'POST') {
                 e.preventDefault();
                 alert('Cannot record changes while offline or when the server is stopped. Please ensure the server is running to save entries.');
+                return;
+            }
+        }
+
+        // Clear all cached assets when user logs out
+        if (e.target && e.target.getAttribute('action') && e.target.getAttribute('action').includes('/logout')) {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ action: 'CLEAR_CACHES' });
+            }
+            if ('caches' in window) {
+                caches.keys().then((names) => Promise.all(names.map((name) => caches.delete(name))));
             }
         }
     });

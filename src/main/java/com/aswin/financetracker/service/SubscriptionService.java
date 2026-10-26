@@ -8,6 +8,7 @@ import com.aswin.financetracker.repository.SubscriptionRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,21 +28,35 @@ public class SubscriptionService {
         this.userService = userService;
     }
 
+    private User resolveCurrentUser() {
+        User current = userService.getCurrentUser();
+        return current != null ? current : userService.getAuthenticatedOrSystemUser();
+    }
+
     @Transactional(readOnly = true)
     public List<Subscription> getAllSubscriptions() {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         return subscriptionRepository.findByUserOrderByNextDueDateAsc(user);
     }
 
     @Transactional(readOnly = true)
     public Subscription getSubscriptionById(Long id) {
+        User user = resolveCurrentUser();
+        Long userId = user != null ? user.getId() : null;
+        if (userId != null) {
+            Optional<Subscription> opt = subscriptionRepository.findByIdAndUserId(id, userId);
+            if (opt.isPresent()) {
+                return opt.get();
+            }
+        }
         return subscriptionRepository.findById(id)
+            .filter(sub -> userId == null || sub.getUser() == null || sub.getUser().getId() == null || sub.getUser().getId().equals(userId))
             .orElseThrow(() -> new NoSuchElementException("Subscription not found with id: " + id));
     }
 
     @Transactional(readOnly = true)
     public List<Subscription> getSubscriptionsDueWithinDays(int days) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         LocalDate today = LocalDate.now();
         LocalDate maxDate = today.plusDays(days);
         List<Subscription> activeSubscriptions = subscriptionRepository.findByUserAndActiveTrueOrderByNextDueDateAsc(user);
@@ -51,7 +66,7 @@ public class SubscriptionService {
     }
 
     public Subscription createSubscription(SubscriptionRequestDto dto) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         Subscription subscription = new Subscription(
             dto.getName(),
             dto.getAmount(),
@@ -120,9 +135,7 @@ public class SubscriptionService {
     }
 
     public void deleteSubscription(Long id) {
-        if (!subscriptionRepository.existsById(id)) {
-            throw new NoSuchElementException("Subscription not found with id: " + id);
-        }
-        subscriptionRepository.deleteById(id);
+        Subscription subscription = getSubscriptionById(id);
+        subscriptionRepository.delete(subscription);
     }
 }

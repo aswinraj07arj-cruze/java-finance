@@ -58,7 +58,7 @@ class SubscriptionServiceTest {
         Subscription subDueInTenDays = new Subscription("Gym", new BigDecimal("50.00"), BillingCycle.MONTHLY, today.plusDays(10), ExpenseCategory.HEALTHCARE, dummyUser);
         Subscription subOverdue = new Subscription("Internet", new BigDecimal("60.00"), BillingCycle.MONTHLY, today.minusDays(1), ExpenseCategory.BILLS, dummyUser);
 
-        when(userService.getDefaultUser()).thenReturn(dummyUser);
+        when(userService.getCurrentUser()).thenReturn(dummyUser);
         when(subscriptionRepository.findByUserAndActiveTrueOrderByNextDueDateAsc(dummyUser))
             .thenReturn(List.of(subOverdue, subDueTomorrow, subDueInTwoDays, subDueInTenDays));
 

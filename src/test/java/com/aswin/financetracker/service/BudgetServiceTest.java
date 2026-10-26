@@ -59,7 +59,7 @@ class BudgetServiceTest {
         Budget budgetTravel = new Budget(ExpenseCategory.TRAVEL, new BigDecimal("200.00"), dummyUser);
         budgetTravel.setId(2L);
 
-        when(userService.getDefaultUser()).thenReturn(dummyUser);
+        when(userService.getCurrentUser()).thenReturn(dummyUser);
         when(budgetRepository.findByUserOrderByCategoryAsc(dummyUser)).thenReturn(List.of(budgetFood, budgetTravel));
 
         // Food spent 400 (under budget)
@@ -98,7 +98,7 @@ class BudgetServiceTest {
         Budget existing = new Budget(ExpenseCategory.FOOD, new BigDecimal("400.00"), dummyUser);
         existing.setId(10L);
 
-        when(userService.getDefaultUser()).thenReturn(dummyUser);
+        when(userService.getCurrentUser()).thenReturn(dummyUser);
         when(budgetRepository.findByUserAndCategory(dummyUser, ExpenseCategory.FOOD))
             .thenReturn(Optional.of(existing));
         when(budgetRepository.save(any(Budget.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -114,7 +114,7 @@ class BudgetServiceTest {
     @Test
     @DisplayName("Should create new budget if category does not exist yet")
     void testSaveOrUpdateBudget_CreateNew() {
-        when(userService.getDefaultUser()).thenReturn(dummyUser);
+        when(userService.getCurrentUser()).thenReturn(dummyUser);
         when(budgetRepository.findByUserAndCategory(dummyUser, ExpenseCategory.BILLS))
             .thenReturn(Optional.empty());
         when(budgetRepository.save(any(Budget.class))).thenAnswer(invocation -> invocation.getArgument(0));

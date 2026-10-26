@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,9 +25,14 @@ public class IncomeService {
         this.userService = userService;
     }
 
+    private User resolveCurrentUser() {
+        User current = userService.getCurrentUser();
+        return current != null ? current : userService.getAuthenticatedOrSystemUser();
+    }
+
     @Transactional(readOnly = true)
     public List<Income> getIncomes(LocalDate startDate, LocalDate endDate, IncomeSource source) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         if (startDate != null && endDate != null && source != null) {
             return incomeRepository.findByUserAndSourceAndDateBetweenOrderByDateDescIdDesc(user, source, startDate, endDate);
         } else if (startDate != null && endDate != null) {
@@ -40,12 +46,21 @@ public class IncomeService {
 
     @Transactional(readOnly = true)
     public Income getIncomeById(Long id) {
+        User user = resolveCurrentUser();
+        Long userId = user != null ? user.getId() : null;
+        if (userId != null) {
+            Optional<Income> opt = incomeRepository.findByIdAndUserId(id, userId);
+            if (opt.isPresent()) {
+                return opt.get();
+            }
+        }
         return incomeRepository.findById(id)
+            .filter(inc -> userId == null || inc.getUser() == null || inc.getUser().getId() == null || inc.getUser().getId().equals(userId))
             .orElseThrow(() -> new NoSuchElementException("Income entry not found with id: " + id));
     }
 
     public Income createIncome(IncomeRequestDto dto) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         Income income = new Income(
             dto.getAmount(),
             dto.getSource(),
@@ -66,27 +81,25 @@ public class IncomeService {
     }
 
     public void deleteIncome(Long id) {
-        if (!incomeRepository.existsById(id)) {
-            throw new NoSuchElementException("Income entry not found with id: " + id);
-        }
-        incomeRepository.deleteById(id);
+        Income income = getIncomeById(id);
+        incomeRepository.delete(income);
     }
 
     @Transactional(readOnly = true)
     public BigDecimal getTotalIncome() {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         return incomeRepository.sumTotalIncomeByUser(user);
     }
 
     @Transactional(readOnly = true)
     public BigDecimal getIncomeBetween(LocalDate startDate, LocalDate endDate) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         return incomeRepository.sumIncomeByUserAndDateBetween(user, startDate, endDate);
     }
 
     @Transactional(readOnly = true)
     public List<Object[]> getSourceTotals(LocalDate startDate, LocalDate endDate) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         return incomeRepository.findSourceTotalsByUserAndDateBetween(user, startDate, endDate);
     }
 }

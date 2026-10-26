@@ -1,20 +1,15 @@
 /*
  * Finance Tracker Progressive Web App (PWA) Service Worker
- * Version: 2.0.0
- * Strategy:
- *   - Navigation: Network-First with Cached Dashboard & Offline Fallback
- *   - Dashboard Shell: Precached ('/', '/dashboard') and dynamically refreshed
- *   - Read-Only Chart APIs (/api/charts/*): Network-First with cache fallback
- *   - Static Assets: Stale-While-Revalidate
- *   - Mutating Requests (POST/PUT/DELETE): Network-Only (Never Cached)
- *   - Exports & Console: Network-Only
+ * Version: 3.0.0
+ * Strategy (Multi-User Privacy Safe):
+ *   - Only static assets (CSS, JS, icons, fonts, offline fallback) are cached.
+ *   - Authenticated HTML and API responses are NEVER cached to protect user data isolation.
+ *   - Caches are cleared upon logout.
  */
 
-const CACHE_NAME = 'finance-tracker-v2';
+const CACHE_NAME = 'finance-tracker-static-v3';
 
 const PRECACHE_ASSETS = [
-    '/',
-    '/dashboard',
     '/offline.html',
     '/manifest.json',
     '/css/styles.css',
@@ -28,15 +23,14 @@ const PRECACHE_ASSETS = [
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
 ];
 
-// 1. Install event: Pre-cache static shell, dashboard & offline fallback
+// 1. Install event: Pre-cache static shell & offline fallback
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                // Use Promise.allSettled to ensure individual external failures don't block install
                 return Promise.allSettled(
-                    PRECACHE_ASSETS.map(asset => {
-                        return cache.add(asset).catch(err => {
+                    PRECACHE_ASSETS.map((asset) => {
+                        return cache.add(asset).catch((err) => {
                             console.warn('[PWA ServiceWorker] Pre-cache skip for:', asset, err);
                         });
                     })
@@ -64,7 +58,18 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// 3. Fetch event: Intelligent offline-ready routing
+// 3. Clear cache message handler (triggered on logout)
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.action === 'CLEAR_CACHES') {
+        caches.keys().then((cacheNames) => {
+            return Promise.all(cacheNames.map((name) => caches.delete(name)));
+        }).then(() => {
+            console.log('[PWA ServiceWorker] All caches successfully cleared on logout.');
+        });
+    }
+});
+
+// 4. Fetch event: Privacy-preserving routing
 self.addEventListener('fetch', (event) => {
     const request = event.request;
     const url = new URL(request.url);
@@ -74,124 +79,64 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Rule B: Never cache chrome-extension or unsupported protocols
+    // Rule B: Never cache chrome-extension or non-HTTP protocols
     if (!url.protocol.startsWith('http')) {
         return;
     }
 
-    // Rule C: Never cache sensitive reports export or H2 console
-    if (url.pathname.startsWith('/reports/export') || url.pathname.startsWith('/h2-console')) {
+    // Rule C: All API routes are strictly Network-Only (no user data cached)
+    if (url.pathname.startsWith('/api/')) {
         event.respondWith(fetch(request));
         return;
     }
 
-    // Rule D: Read-only Chart APIs -> Network-First with Cache Fallback for offline charts
-    if (url.pathname.startsWith('/api/charts/')) {
-        event.respondWith(
-            fetch(request)
-                .then((networkResponse) => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        const responseClone = networkResponse.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-                    }
-                    return networkResponse;
-                })
-                .catch(async () => {
-                    const cachedChart = await caches.match(request);
-                    if (cachedChart) {
-                        return cachedChart;
-                    }
-                    // Return graceful empty JSON fallback so Chart.js handles it without error
-                    return new Response(JSON.stringify({ labels: [], incomeData: [], expenseData: [], data: [] }), {
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                })
-        );
-        return;
-    }
-
-    // Rule E: HTML Page Navigations -> Network-First, then Cached Dashboard/Page, then Offline Fallback
+    // Rule D: HTML Page Navigations -> Network-Only with offline.html fallback
     const isNavigation = request.mode === 'navigate' ||
         (request.headers.get('accept') && request.headers.get('accept').includes('text/html'));
 
     if (isNavigation) {
         event.respondWith(
-            fetch(request)
-                .then((networkResponse) => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        const responseClone = networkResponse.clone();
-                        caches.open(CACHE_NAME).then((cache) => {
-                            cache.put(request, responseClone);
-                            if (url.pathname === '/' || url.pathname === '/dashboard') {
-                                cache.put('/', responseClone.clone());
-                                cache.put('/dashboard', responseClone.clone());
-                            }
-                        });
-                    }
-                    return networkResponse;
-                })
-                .catch(async () => {
-                    // 1. Try exact requested page from cache
-                    const cachedPage = await caches.match(request);
-                    if (cachedPage) {
-                        return cachedPage;
-                    }
-
-                    // 2. If navigating to root or dashboard, serve cached dashboard
-                    if (url.pathname === '/' || url.pathname === '/dashboard') {
-                        const cachedDashboard = (await caches.match('/')) || (await caches.match('/dashboard'));
-                        if (cachedDashboard) {
-                            return cachedDashboard;
-                        }
-                    }
-
-                    // 3. Fall back to /offline.html
-                    const offlinePage = await caches.match('/offline.html');
-                    if (offlinePage) {
-                        return offlinePage;
-                    }
-
-                    // 4. Last resort: any cached page
-                    return (await caches.match('/')) || (await caches.match('/dashboard'));
-                })
+            fetch(request).catch(() => {
+                return caches.match('/offline.html');
+            })
         );
         return;
     }
 
-    // Rule F: Static Assets (CSS, JS, Images, Fonts, Manifest) -> Stale-While-Revalidate
-    const isStaticAsset = (
-        url.pathname.startsWith('/css/') ||
-        url.pathname.startsWith('/js/') ||
-        url.pathname.startsWith('/icons/') ||
-        url.pathname === '/manifest.json' ||
-        url.hostname.includes('cdn.jsdelivr.net') ||
-        url.hostname.includes('fonts.googleapis.com') ||
-        url.hostname.includes('fonts.gstatic.com')
-    );
+    // Rule E: Static Assets (CSS, JS, Fonts, Icons) -> Cache-First with Network Fallback
+    const isStaticAsset = url.pathname.startsWith('/css/') ||
+                          url.pathname.startsWith('/js/') ||
+                          url.pathname.startsWith('/icons/') ||
+                          url.pathname === '/manifest.json' ||
+                          url.pathname === '/favicon.ico' ||
+                          url.hostname.includes('fonts.googleapis.com') ||
+                          url.hostname.includes('fonts.gstatic.com') ||
+                          url.hostname.includes('cdn.jsdelivr.net');
 
     if (isStaticAsset) {
         event.respondWith(
-            caches.open(CACHE_NAME).then((cache) => {
-                return cache.match(request).then((cachedResponse) => {
-                    const fetchPromise = fetch(request)
-                        .then((networkResponse) => {
-                            if (networkResponse && networkResponse.status === 200) {
-                                cache.put(request, networkResponse.clone());
-                            }
-                            return networkResponse;
-                        })
-                        .catch(() => cachedResponse);
-
-                    return cachedResponse || fetchPromise;
+            caches.match(request).then((cachedResponse) => {
+                if (cachedResponse) {
+                    // Update cache in background
+                    fetch(request).then((networkResponse) => {
+                        if (networkResponse && networkResponse.status === 200) {
+                            caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse));
+                        }
+                    }).catch(() => {/* offline */});
+                    return cachedResponse;
+                }
+                return fetch(request).then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200) {
+                        const responseClone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+                    }
+                    return networkResponse;
                 });
             })
         );
         return;
     }
 
-    // Default: Network fetch with cache match fallback
-    event.respondWith(
-        fetch(request).catch(() => caches.match(request))
-    );
+    // Default: Network passthrough
+    event.respondWith(fetch(request));
 });
-

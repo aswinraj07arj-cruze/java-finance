@@ -30,15 +30,29 @@ public class BudgetService {
         this.userService = userService;
     }
 
+    private User resolveCurrentUser() {
+        User current = userService.getCurrentUser();
+        return current != null ? current : userService.getAuthenticatedOrSystemUser();
+    }
+
     @Transactional(readOnly = true)
     public List<Budget> getAllBudgets() {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         return budgetRepository.findByUserOrderByCategoryAsc(user);
     }
 
     @Transactional(readOnly = true)
     public Budget getBudgetById(Long id) {
+        User user = resolveCurrentUser();
+        Long userId = user != null ? user.getId() : null;
+        if (userId != null) {
+            Optional<Budget> opt = budgetRepository.findByIdAndUserId(id, userId);
+            if (opt.isPresent()) {
+                return opt.get();
+            }
+        }
         return budgetRepository.findById(id)
+            .filter(b -> userId == null || b.getUser() == null || b.getUser().getId() == null || b.getUser().getId().equals(userId))
             .orElseThrow(() -> new NoSuchElementException("Budget not found with id: " + id));
     }
 
@@ -71,7 +85,7 @@ public class BudgetService {
     }
 
     public Budget saveOrUpdateBudget(BudgetRequestDto dto) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         Optional<Budget> existing = budgetRepository.findByUserAndCategory(user, dto.getCategory());
 
         Budget budget;
@@ -85,9 +99,7 @@ public class BudgetService {
     }
 
     public void deleteBudget(Long id) {
-        if (!budgetRepository.existsById(id)) {
-            throw new NoSuchElementException("Budget not found with id: " + id);
-        }
-        budgetRepository.deleteById(id);
+        Budget budget = getBudgetById(id);
+        budgetRepository.delete(budget);
     }
 }

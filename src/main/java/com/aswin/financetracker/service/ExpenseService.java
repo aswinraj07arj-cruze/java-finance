@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,9 +25,14 @@ public class ExpenseService {
         this.userService = userService;
     }
 
+    private User resolveCurrentUser() {
+        User current = userService.getCurrentUser();
+        return current != null ? current : userService.getAuthenticatedOrSystemUser();
+    }
+
     @Transactional(readOnly = true)
     public List<Expense> getExpenses(LocalDate startDate, LocalDate endDate, ExpenseCategory category) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         if (startDate != null && endDate != null && category != null) {
             return expenseRepository.findByUserAndCategoryAndDateBetweenOrderByDateDescIdDesc(user, category, startDate, endDate);
         } else if (startDate != null && endDate != null) {
@@ -40,12 +46,21 @@ public class ExpenseService {
 
     @Transactional(readOnly = true)
     public Expense getExpenseById(Long id) {
+        User user = resolveCurrentUser();
+        Long userId = user != null ? user.getId() : null;
+        if (userId != null) {
+            Optional<Expense> opt = expenseRepository.findByIdAndUserId(id, userId);
+            if (opt.isPresent()) {
+                return opt.get();
+            }
+        }
         return expenseRepository.findById(id)
+            .filter(exp -> userId == null || exp.getUser() == null || exp.getUser().getId() == null || exp.getUser().getId().equals(userId))
             .orElseThrow(() -> new NoSuchElementException("Expense entry not found with id: " + id));
     }
 
     public Expense createExpense(ExpenseRequestDto dto) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         Expense expense = new Expense(
             dto.getAmount(),
             dto.getCategory(),
@@ -66,33 +81,31 @@ public class ExpenseService {
     }
 
     public void deleteExpense(Long id) {
-        if (!expenseRepository.existsById(id)) {
-            throw new NoSuchElementException("Expense entry not found with id: " + id);
-        }
-        expenseRepository.deleteById(id);
+        Expense expense = getExpenseById(id);
+        expenseRepository.delete(expense);
     }
 
     @Transactional(readOnly = true)
     public BigDecimal getTotalExpense() {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         return expenseRepository.sumTotalExpenseByUser(user);
     }
 
     @Transactional(readOnly = true)
     public BigDecimal getExpenseBetween(LocalDate startDate, LocalDate endDate) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         return expenseRepository.sumExpenseByUserAndDateBetween(user, startDate, endDate);
     }
 
     @Transactional(readOnly = true)
     public BigDecimal getExpenseByCategoryBetween(ExpenseCategory category, LocalDate startDate, LocalDate endDate) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         return expenseRepository.sumExpenseByUserAndCategoryAndDateBetween(user, category, startDate, endDate);
     }
 
     @Transactional(readOnly = true)
     public List<Object[]> getCategorySpending(LocalDate startDate, LocalDate endDate) {
-        User user = userService.getDefaultUser();
+        User user = resolveCurrentUser();
         return expenseRepository.findCategoryTotalsByUserAndDateBetween(user, startDate, endDate);
     }
 }

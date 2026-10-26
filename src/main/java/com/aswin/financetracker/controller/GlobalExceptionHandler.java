@@ -11,14 +11,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoSuchElementException.class)
-    public String handleNotFound(NoSuchElementException ex, HttpServletRequest request, RedirectAttributes redirectAttributes, Model model) {
-        // If it's an AJAX or API request, return a simple error or let it forward
-        if (request.getRequestURI().startsWith("/api/")) {
-            model.addAttribute("errorMessage", ex.getMessage());
-            return "error/404";
-        }
-        redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-        return "redirect:/";
+    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.NOT_FOUND)
+    public String handleNotFound(NoSuchElementException ex, HttpServletRequest request, Model model) {
+        model.addAttribute("errorMessage", ex.getMessage());
+        return "error/404";
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
