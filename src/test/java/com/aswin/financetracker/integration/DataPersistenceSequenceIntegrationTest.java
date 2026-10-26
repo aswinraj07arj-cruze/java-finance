@@ -94,7 +94,7 @@ class DataPersistenceSequenceIntegrationTest {
             null,
             new BigDecimal("5000.00"),
             IncomeSource.SALARY,
-            LocalDate.of(2026, 9, 10),
+            LocalDate.now(),
             "Sequence Test Salary"
         );
         Income savedIncome = incomeService.createIncome(incDto);
@@ -106,7 +106,7 @@ class DataPersistenceSequenceIntegrationTest {
             null,
             new BigDecimal("1500.00"),
             ExpenseCategory.FOOD,
-            LocalDate.of(2026, 9, 10),
+            LocalDate.now(),
             "Sequence Test Groceries"
         );
         Expense savedExpense = expenseService.createExpense(expDto);

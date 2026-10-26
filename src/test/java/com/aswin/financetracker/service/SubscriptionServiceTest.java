@@ -101,8 +101,8 @@ class SubscriptionServiceTest {
     @Test
     @DisplayName("Double-submission guard: calling markAsPaid twice in a row only creates one Expense")
     void testMarkAsPaid_DoubleSubmissionOnlyCreatesOneExpense() {
-        LocalDate initialDueDate = LocalDate.of(2026, 9, 11);
-        Subscription sub = new Subscription("Gym", new BigDecimal("45.00"), BillingCycle.MONTHLY, initialDueDate, ExpenseCategory.HEALTHCARE, dummyUser);
+        LocalDate today = LocalDate.now();
+        Subscription sub = new Subscription("Gym", new BigDecimal("45.00"), BillingCycle.MONTHLY, today, ExpenseCategory.HEALTHCARE, dummyUser);
         sub.setId(99L);
 
         when(subscriptionRepository.findById(99L)).thenReturn(Optional.of(sub));
@@ -110,11 +110,11 @@ class SubscriptionServiceTest {
 
         // First invocation
         Subscription firstCall = subscriptionService.markAsPaid(99L);
-        assertEquals(LocalDate.of(2026, 10, 11), firstCall.getNextDueDate());
+        assertEquals(today.plusMonths(1), firstCall.getNextDueDate());
 
         // Second duplicate invocation (e.g. double click or rapid retry)
         Subscription secondCall = subscriptionService.markAsPaid(99L);
-        assertEquals(LocalDate.of(2026, 10, 11), secondCall.getNextDueDate());
+        assertEquals(today.plusMonths(1), secondCall.getNextDueDate());
 
         // Assert Expense was created only ONCE, and repository save was called only ONCE
         verify(expenseService, times(1)).createExpense(any(ExpenseRequestDto.class));
