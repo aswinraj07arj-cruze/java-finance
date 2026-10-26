@@ -3,20 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Create Account - Personal Finance Tracker</title>
+    <title>Create Account - FINSIGHT</title>
     <link rel="manifest" th:href="@{/manifest.json}">
     <meta name="theme-color" content="#4f46e5">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="apple-touch-icon" sizes="180x180" th:href="@{/icons/apple-touch-icon.png}">
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/icons/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/icons/favicon-16x16.png}">
+    <link rel="shortcut icon" th:href="@{/favicon.ico}">
     <link rel="icon" type="image/svg+xml" th:href="@{/icons/icon.svg}">
 </head>
 <body style="background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
     <div style="width: 100%; max-width: 440px; background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--border); overflow: hidden;">
         <div style="background: var(--bg-sidebar); padding: 2rem; text-align: center; color: white;">
-            <div style="width: 48px; height: 48px; background: var(--primary); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; margin-bottom: 0.75rem;">₹</div>
-            <h2 style="font-size: 1.35rem; font-weight: 700;">FinanceTracker</h2>
+            <img th:src="@{/icons/icon-192x192.png}" alt="FINSIGHT Logo" width="56" height="56" style="border-radius: 14px; box-shadow: 0 6px 16px rgba(0,0,0,0.35); margin-bottom: 0.75rem; object-fit: contain;">
+            <h2 style="font-size: 1.35rem; font-weight: 700;">FINSIGHT</h2>
             <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.25rem;">Create your personal account</p>
         </div>
         

@@ -1,4 +1,4 @@
-// Chart.js Visualizations for Personal Finance Tracker
+// Chart.js Visualizations for FINSIGHT
 document.addEventListener('DOMContentLoaded', () => {
     initCategoryPieChart();
     initIncomeVsExpenseChart();

@@ -1,7 +1,7 @@
 {
-  "name": "Finance Tracker",
-  "short_name": "Finance Tracker",
-  "description": "Personal finance tracking web application to manage income, expenses, budgets, subscriptions, and savings trends.",
+  "name": "FINSIGHT",
+  "short_name": "FINSIGHT",
+  "description": "FINSIGHT personal wealth and finance tracking web application to manage income, expenses, budgets, subscriptions, and savings trends.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

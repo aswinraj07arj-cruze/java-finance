@@ -48,6 +48,8 @@ public class SecurityConfig {
                     "/service-worker.js",
                     "/offline.html",
                     "/favicon.ico",
+                    "/apple-touch-icon.png",
+                    "/logo.png",
                     "/actuator/health",
                     "/h2-console/**"
                 ).permitAll()

@@ -1,17 +1,18 @@
 /*
- * Finance Tracker Progressive Web App (PWA) Service Worker
- * Version: 3.0.0
+ * FINSIGHT Progressive Web App (PWA) Service Worker
+ * Version: 3.1.0
  * Strategy (Multi-User Privacy Safe):
  *   - Only static assets (CSS, JS, icons, fonts, offline fallback) are cached.
  *   - Authenticated HTML and API responses are NEVER cached to protect user data isolation.
  *   - Caches are cleared upon logout.
  */
 
-const CACHE_NAME = 'finance-tracker-static-v3';
+const CACHE_NAME = 'finsight-static-v5';
 
 const PRECACHE_ASSETS = [
     '/offline.html',
     '/manifest.json',
+    '/favicon.ico',
     '/css/styles.css',
     '/js/charts.js',
     '/js/app.js',
@@ -19,6 +20,9 @@ const PRECACHE_ASSETS = [
     '/icons/icon-192x192.png',
     '/icons/icon-512x512.png',
     '/icons/icon-maskable-512x512.png',
+    '/icons/apple-touch-icon.png',
+    '/icons/favicon-32x32.png',
+    '/icons/favicon-16x16.png',
     'https://cdn.jsdelivr.net/npm/chart.js',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
 ];
@@ -109,6 +113,8 @@ self.addEventListener('fetch', (event) => {
                           url.pathname.startsWith('/icons/') ||
                           url.pathname === '/manifest.json' ||
                           url.pathname === '/favicon.ico' ||
+                          url.pathname === '/apple-touch-icon.png' ||
+                          url.pathname === '/logo.png' ||
                           url.hostname.includes('fonts.googleapis.com') ||
                           url.hostname.includes('fonts.gstatic.com') ||
                           url.hostname.includes('cdn.jsdelivr.net');

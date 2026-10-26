@@ -1,4 +1,4 @@
-/* Modern CSS Design System for Personal Finance Tracker */
+/* Modern CSS Design System for FINSIGHT */
 :root {
   --primary: #4f46e5;
   --primary-hover: #4338ca;
@@ -62,6 +62,20 @@ body {
   align-items: center;
   gap: 0.75rem;
   border-bottom: 1px solid #1e293b;
+}
+
+.brand-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(10, 24, 71, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.brand-logo:hover {
+  transform: scale(1.05);
 }
 
 .brand-icon {

@@ -1,5 +1,5 @@
 /**
- * Finance Tracker PWA Application Controller
+ * FINSIGHT PWA Application Controller
  * Handles Service Worker registration, native installation prompt,
  * network status monitoring, and offline form protection.
  */
@@ -70,7 +70,7 @@
 
     // 4. Listen for successful app installation
     window.addEventListener('appinstalled', () => {
-        console.log('[PWA] Finance Tracker was successfully installed');
+        console.log('[PWA] FINSIGHT was successfully installed');
         deferredPrompt = null;
         if (installBtn) {
             installBtn.style.display = 'none';
@@ -169,7 +169,7 @@
         toast.id = 'pwa-update-toast';
         toast.className = 'pwa-toast pwa-toast-info';
         toast.innerHTML = `
-            <span>A new version of Finance Tracker is available!</span>
+            <span>A new version of FINSIGHT is available!</span>
             <button onclick="window.location.reload()" class="btn btn-sm btn-primary" style="margin-left:0.75rem; padding:0.25rem 0.6rem;">Update</button>
         `;
         document.body.appendChild(toast);

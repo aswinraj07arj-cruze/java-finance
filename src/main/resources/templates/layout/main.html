@@ -3,7 +3,7 @@
 <head th:fragment="header(pageTitle)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title th:text="${pageTitle != null ? pageTitle + ' - Personal Finance' : 'Personal Finance Tracker'}">Personal Finance Tracker</title>
+    <title th:text="${pageTitle != null ? pageTitle + ' - FINSIGHT' : 'FINSIGHT - Personal Finance Tracker'}">FINSIGHT - Personal Finance Tracker</title>
     
     <!-- CSRF Tokens for AJAX -->
     <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
@@ -15,8 +15,11 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Finance Tracker">
-    <link rel="apple-touch-icon" th:href="@{/icons/icon-192x192.png}">
+    <meta name="apple-mobile-web-app-title" content="FINSIGHT">
+    <link rel="apple-touch-icon" sizes="180x180" th:href="@{/icons/apple-touch-icon.png}">
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/icons/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/icons/favicon-16x16.png}">
+    <link rel="shortcut icon" th:href="@{/favicon.ico}">
     <link rel="icon" type="image/svg+xml" th:href="@{/icons/icon.svg}">
     
     <!-- Fonts & Styles -->
@@ -31,9 +34,9 @@
 <!-- Sidebar Fragment -->
 <aside th:fragment="sidebar" class="sidebar">
     <div class="sidebar-header">
-        <div class="brand-icon">₹</div>
+        <img th:src="@{/icons/icon-192x192.png}" alt="FINSIGHT Logo" class="brand-logo" width="40" height="40">
         <div>
-            <div class="brand-title">FinanceTracker</div>
+            <div class="brand-title">FINSIGHT</div>
             <div class="brand-subtitle">Personal Wealth Manager</div>
         </div>
     </div>
